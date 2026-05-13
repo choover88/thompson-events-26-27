@@ -544,7 +544,7 @@ function buildCard(ev, isPast) {
     ? ev.type.split(',').map(t => t.trim()).filter(Boolean).map(t => {
         const cls = typeClass(t);
         if (t.toLowerCase().includes('thompson')) {
-          return `<span class="type-badge-wrap" onclick="event.stopPropagation();togglePopover(this)">
+          return `<span class="type-badge-wrap" onclick="togglePopover(this,event)">
             <span class="type-badge ${cls} has-info">${t}</span>
             <span class="type-popover">${THOMPSON_DESC}</span>
           </span>`;
@@ -713,11 +713,14 @@ async function init() {
 init();
 
 // Close any open popovers when tapping elsewhere
-document.addEventListener('click', () => {
-  document.querySelectorAll('.type-badge-wrap.open').forEach(el => el.classList.remove('open'));
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.type-badge-wrap')) {
+    document.querySelectorAll('.type-badge-wrap.open').forEach(el => el.classList.remove('open'));
+  }
 });
 
-window.togglePopover = function(wrap) {
+window.togglePopover = function(wrap, e) {
+  if (e) { e.stopPropagation(); e.preventDefault(); }
   const wasOpen = wrap.classList.contains('open');
   // Close all first
   document.querySelectorAll('.type-badge-wrap.open').forEach(el => el.classList.remove('open'));
