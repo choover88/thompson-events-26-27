@@ -622,22 +622,59 @@ async function init() {
   const pastList   = document.getElementById('past-list');
   const pastSection = document.getElementById('past-section');
 
-  try {
-    const resp = await fetch(CSV_URL);
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-    const csv = await resp.text();
-    const rows = parseCSV(csv);
+  // Hardcoded fallback data (always works, even offline or when CORS blocks the fetch)
+  const FALLBACK_EVENTS = [
+    { date: 'Sunday, August 30, 2026', event: 'Student Leadership Team Fair', time: '7:00pm - 8:00pm', loc: 'TBD', info: 'If you're interested in stepping into a leadership role, joining a SLT committee is the best place to start. The SLT Fair is designed to help you figure out which committee is the best fit for you. You'll meet current leaders, learn what each group does, and get a better sense of where you want to get involved.', signup: '', type: 'Thompson Event', extraInfo: '' },
+    { date: 'Wednesday, September 16, 2026', event: 'Letters of Love Collaboration', time: '6:00pm - 8:00pm', loc: 'TBD', info: '', signup: '', type: 'Thompson Event', extraInfo: '' },
+    { date: 'Thursday, September 24, 2026', event: 'Fall Craft Night', time: '6:00pm - 8:00pm', loc: 'TBD', info: '', signup: '', type: 'Thompson Event', extraInfo: '' },
+    { date: 'Sunday, September 27, 2026', event: 'Student Leadership Team General Assembly', time: '7:00pm - 8:00pm', loc: 'TBD', info: 'General Assemblies are an opportunity for Thompson Scholars to take part in a Student Leadership Team–led meeting, hear about upcoming events and opportunities, and engage in a short professional development or skill-building activity.', signup: '', type: 'Thompson Event', extraInfo: '' },
+    { date: 'Wednesday, October 14, 2026', event: 'Degree Audit Support!', time: '10:00am - 11:30am', loc: 'TBD', info: '', signup: '', type: 'Thompson Event', extraInfo: '' },
+    { date: 'Wednesday, October 14, 2026', event: 'Degree Audit Support!', time: '3:00pm - 4:30pm', loc: 'TBD', info: '', signup: '', type: 'Thompson Event', extraInfo: '' },
+    { date: 'Thursday, October 22, 2026', event: 'Eco-Bricking', time: '5:00pm - 7:00pm', loc: 'TBD', info: '', signup: '', type: 'Service, Thompson Event', extraInfo: '' },
+    { date: 'Sunday, October 25, 2026', event: 'Student Leadership Team General Assembly', time: '7:00pm - 8:00pm', loc: 'TBD', info: 'General Assemblies are an opportunity for Thompson Scholars to take part in a Student Leadership Team–led meeting, hear about upcoming events and opportunities, and engage in a short professional development or skill-building activity.', signup: '', type: 'Thompson Event', extraInfo: '' },
+    { date: 'Sunday, November 22, 2026', event: 'Student Leadership Team General Assembly', time: '7:00pm - 8:00pm', loc: 'TBD', info: 'General Assemblies are an opportunity for Thompson Scholars to take part in a Student Leadership Team–led meeting, hear about upcoming events and opportunities, and engage in a short professional development or skill-building activity.', signup: '', type: 'Thompson Event', extraInfo: '' },
+  ];
 
-    const events = rows.map(r => ({
-      date:   parseDate(get(r, 'Date', 'date')),
-      event:  get(r, 'Event', 'event', 'name', 'title'),
-      time:   get(r, 'Time', 'time'),
-      loc:    get(r, 'Official Location', 'official location', 'location'),
-      info:   get(r, 'Additional Info', 'additional info', 'description'),
-      signup: get(r, 'Sign Up', 'sign up', 'signup', 'link', 'url', 'zoom'),
-      type:   get(r, 'Type', 'type', 'event type'),
+  function processFallback() {
+    return FALLBACK_EVENTS.map(r => ({
+      date:      parseDate(r.date),
+      event:     r.event,
+      time:      r.time,
+      loc:       r.loc,
+      info:      r.info,
+      signup:    r.signup,
+      type:      r.type,
+      extraInfo: r.extraInfo,
+    }));
+  }
+
+  try {
+    let rows = [];
+    try {
+      const resp = await fetch(CSV_URL);
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const csv = await resp.text();
+      rows = parseCSV(csv);
+    } catch(fetchErr) {
+      console.warn('Sheet fetch failed, using fallback data:', fetchErr.message);
+    }
+
+    // If fetch failed or returned no events, use fallback
+    const events_raw = rows.length ? rows.map(r => ({
+      date:      parseDate(get(r, 'Date', 'date')),
+      event:     get(r, 'Event', 'event', 'name', 'title'),
+      time:      get(r, 'Time', 'time'),
+      loc:       get(r, 'Official Location', 'official location', 'location'),
+      info:      get(r, 'Additional Info', 'additional info', 'description'),
+      signup:    get(r, 'Sign Up', 'sign up', 'signup', 'link', 'url', 'zoom'),
+      type:      get(r, 'Type', 'type', 'event type'),
       extraInfo: get(r, 'Info', 'info'),
-    })).filter(e => e.event);
+    })) : processFallback();
+
+    const events = events_raw.filter(e => e.event);
+    const placeholder = rows.length === 0;
+
+    // events already mapped above
 
     const today = new Date(); today.setHours(0,0,0,0);
     const upcoming = events.filter(e => !e.date || e.date >= today).sort((a,b) => (!a.date?1:!b.date?-1:a.date-b.date));
