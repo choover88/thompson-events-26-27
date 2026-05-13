@@ -41,7 +41,7 @@
 
   header {
     background: var(--brown);
-    padding: 2.5rem 2rem 1.6rem;
+    padding: 3.25rem 2rem 1.6rem;
   }
 
   .header-inner {
@@ -61,17 +61,17 @@
 
   .header-eyebrow {
     font-family: 'Montserrat', sans-serif;
-    font-size: 0.65rem;
-    font-weight: 800;
-    letter-spacing: 0.22em;
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
     text-transform: uppercase;
     color: var(--orange);
-    margin-top: 19px;
+    margin-top: 26px;
   }
 
   .header-text h1 {
     font-family: 'BrittanySignature', cursive;
-    font-size: 3rem; font-weight: 400;
+    font-size: 3.75rem; font-weight: 400;
     color: var(--white); line-height: 1;
   }
 
@@ -184,34 +184,6 @@
   .type-service  { background: var(--gold-light);   color: #7b5a12;       border: 1px solid #f0d898; }
   .type-other    { background: var(--gold-light);    color: #7b5a12;       border: 1px solid #f0d898; }
 
-  .type-badge-wrap {
-    position: relative;
-    display: inline-flex;
-  }
-
-  .type-badge.has-info {
-    cursor: pointer;
-    text-decoration: underline dotted;
-    text-underline-offset: 2px;
-  }
-
-  .type-popover {
-    display: none;
-    position: fixed;
-    background: var(--brown);
-    color: var(--tan);
-    font-size: 0.72rem;
-    font-weight: 500;
-    line-height: 1.6;
-    padding: 0.6rem 0.8rem;
-    border-radius: 8px;
-    width: 220px;
-    z-index: 9999;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.22);
-    pointer-events: none;
-  }
-
-  .type-badge-wrap.open .type-popover { display: block; }
 
   .chips {
     display: flex; flex-wrap: wrap;
@@ -244,6 +216,18 @@
   }
 
   .event-card.open .card-body { display: block; }
+
+  .thompson-note {
+    font-family: 'Dancing Script', cursive;
+    font-size: 0.95rem;
+    color: var(--brown-light);
+    line-height: 1.6;
+    margin-bottom: 1rem;
+    padding: 0.5rem 0.75rem;
+    border-left: 3px solid var(--orange-mid);
+    background: var(--orange-light);
+    border-radius: 0 6px 6px 0;
+  }
 
   .info-text {
     font-size: 0.84rem; font-weight: 500;
@@ -544,10 +528,7 @@ function buildCard(ev, isPast) {
     ? ev.type.split(',').map(t => t.trim()).filter(Boolean).map(t => {
         const cls = typeClass(t);
         if (t.toLowerCase().includes('thompson')) {
-          return `<span class="type-badge-wrap" onclick="togglePopover(this,event)">
-            <span class="type-badge ${cls} has-info">${t}</span>
-            <span class="type-popover">${THOMPSON_DESC}</span>
-          </span>`;
+          return `<span class="type-badge ${cls}">${t}</span>`;
         }
         return `<span class="type-badge ${cls}">${t}</span>`;
       }).join(' ')
@@ -561,7 +542,10 @@ function buildCard(ev, isPast) {
     : '';
 
   // Action buttons (signup / zoom join)
-  let actionSection = '';
+  const isThompson = ev.type && ev.type.toLowerCase().includes('thompson');
+  const thompsonNote = isThompson
+    ? `<p class="thompson-note">${ev.extraInfo || 'A Thompson Event is a program or gathering hosted or co-sponsored by the Thompson Scholars Learning Community, designed to support scholar connection, engagement, and growth.'}</p>`
+    : '';
   const actionBtns = [];
   if (ev.signup) {
     const isZoomLink = /zoom\.us|meeting\.zoom/i.test(ev.signup);
@@ -600,6 +584,7 @@ function buildCard(ev, isPast) {
       ${ev.info
         ? `<p class="info-text">${ev.info}</p>`
         : `<p class="info-text" style="opacity:0.5;font-style:italic">No additional information provided.</p>`}
+      ${thompsonNote}
       ${actionSection}
       <p class="cal-label">Add to your calendar</p>
       <div class="cal-btns">
@@ -712,27 +697,6 @@ async function init() {
 
 init();
 
-// Close any open popovers when tapping elsewhere
-document.addEventListener('click', (e) => {
-  if (!e.target.closest('.type-badge-wrap')) {
-    document.querySelectorAll('.type-badge-wrap.open').forEach(el => el.classList.remove('open'));
-  }
-});
-
-window.togglePopover = function(wrap, e) {
-  if (e) { e.stopPropagation(); e.preventDefault(); }
-  const wasOpen = wrap.classList.contains('open');
-  // Close all first
-  document.querySelectorAll('.type-badge-wrap.open').forEach(el => el.classList.remove('open'));
-  if (!wasOpen) {
-    const popover = wrap.querySelector('.type-popover');
-    const rect = wrap.getBoundingClientRect();
-    // Position below the badge
-    popover.style.top = (rect.bottom + 8) + 'px';
-    popover.style.left = Math.min(rect.left, window.innerWidth - 236) + 'px';
-    wrap.classList.add('open');
-  }
-};
 </script>
 </body>
 </html>
