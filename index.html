@@ -542,6 +542,22 @@ function buildCard(ev, isPast) {
     : '';
 
   // Action buttons (signup / zoom join)
+  let actionSection = '';
+  const actionBtns = [];
+  if (ev.signup) {
+    const isZoomLink = /zoom\.us|meeting\.zoom/i.test(ev.signup);
+    if (isZoomLink) {
+      actionBtns.push(`<a class="btn btn-zoom" href="${ev.signup}" target="_blank" rel="noopener">${iconVideo} Join Zoom Meeting</a>`);
+    } else {
+      actionBtns.push(`<a class="btn btn-signup" href="${ev.signup}" target="_blank" rel="noopener">${iconLink} Sign Up</a>`);
+    }
+  } else if (isZoom(ev.loc) && ev.loc.startsWith('http')) {
+    actionBtns.push(`<a class="btn btn-zoom" href="${ev.loc}" target="_blank" rel="noopener">${iconVideo} Join Zoom Meeting</a>`);
+  }
+  if (actionBtns.length) {
+    actionSection = `<p class="action-label">Links</p><div class="action-btns">${actionBtns.join('')}</div>`;
+  }
+
   const isThompson = ev.type && ev.type.toLowerCase().includes('thompson');
   const thompsonNote = isThompson
     ? `<p class="thompson-note">${ev.extraInfo || 'A Thompson Event is a program or gathering hosted or co-sponsored by the Thompson Scholars Learning Community, designed to support scholar connection, engagement, and growth.'}</p>`
