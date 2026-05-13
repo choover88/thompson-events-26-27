@@ -523,30 +523,43 @@ function buildCard(ev, isPast) {
   const d = ev.date;
   const zoom = isZoom(ev.loc);
   const card = document.createElement('div');
-  card.className = 'event-card' + (isPast?' past':'');
+  card.className = 'event-card' + (isPast ? ' past' : '');
 
-  // Build type badges — Thompson Event gets a tap/click popover using the Info column
+  // Type badges
   const typeBadges = ev.type
-    ? ev.type.split(',').map(t => t.trim()).filter(Boolean).map(t => {
-        const cls = typeClass(t);
-        if (t.toLowerCase().includes('thompson')) {
-          return `<span class="type-badge ${cls}">${t}</span>`;
-        }
-        return `<span class="type-badge ${cls}">${t}</span>`;
-      }).join(' ')
+    ? ev.type.split(',').map(t => t.trim()).filter(Boolean)
+        .map(t => `<span class="type-badge ${typeClass(t)}">${t}</span>`).join(' ')
     : '';
 
-  // Location chip: show Zoom badge if virtual, otherwise location name
+  // Location chip
   const locChip = ev.loc
     ? zoom
       ? `<span class="chip chip-zoom">${iconVideo} Zoom</span>`
       : `<span class="chip chip-loc">${iconPin} ${ev.loc}</span>`
     : '';
 
+  // Action buttons
+  let actionSection = '';
+  const actionBtns = [];
+  if (ev.signup) {
+    if (/zoom\.us|meeting\.zoom/i.test(ev.signup)) {
+      actionBtns.push(`<a class="btn btn-zoom" href="${ev.signup}" target="_blank" rel="noopener">${iconVideo} Join Zoom Meeting</a>`);
+    } else {
+      actionBtns.push(`<a class="btn btn-signup" href="${ev.signup}" target="_blank" rel="noopener">${iconLink} Sign Up</a>`);
+    }
+  } else if (zoom && ev.loc && ev.loc.startsWith('http')) {
+    actionBtns.push(`<a class="btn btn-zoom" href="${ev.loc}" target="_blank" rel="noopener">${iconVideo} Join Zoom Meeting</a>`);
+  }
+  if (actionBtns.length) {
+    actionSection = `<p class="action-label">Links</p><div class="action-btns">${actionBtns.join('')}</div>`;
+  }
+
+  // Thompson note
   const isThompson = ev.type && ev.type.toLowerCase().includes('thompson');
   const thompsonNote = isThompson
     ? `<p class="thompson-note">A Thompson Event is a program or gathering hosted or co-sponsored by the Thompson Scholars Learning Community, designed to support scholar connection, engagement, and growth.</p>`
     : '';
+
   card.innerHTML = `
     <div class="card-header">
       <div class="date-badge">
@@ -583,6 +596,7 @@ function buildCard(ev, isPast) {
   card.querySelector('.btn-ics').addEventListener('click', e => { e.stopPropagation(); dlICS(ev); });
   return card;
 }
+
 
 async function init() {
   const loading     = document.getElementById('loading');
