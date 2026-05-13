@@ -197,9 +197,7 @@
 
   .type-popover {
     display: none;
-    position: absolute;
-    bottom: calc(100% + 8px);
-    left: 0;
+    position: fixed;
     background: var(--brown);
     color: var(--tan);
     font-size: 0.72rem;
@@ -208,18 +206,9 @@
     padding: 0.6rem 0.8rem;
     border-radius: 8px;
     width: 220px;
-    z-index: 100;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+    z-index: 9999;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.22);
     pointer-events: none;
-  }
-
-  .type-popover::after {
-    content: '';
-    position: absolute;
-    top: 100%;
-    left: 14px;
-    border: 6px solid transparent;
-    border-top-color: var(--brown);
   }
 
   .type-badge-wrap.open .type-popover { display: block; }
@@ -555,7 +544,7 @@ function buildCard(ev, isPast) {
     ? ev.type.split(',').map(t => t.trim()).filter(Boolean).map(t => {
         const cls = typeClass(t);
         if (t.toLowerCase().includes('thompson')) {
-          return `<span class="type-badge-wrap" onclick="event.stopPropagation();this.classList.toggle('open')">
+          return `<span class="type-badge-wrap" onclick="event.stopPropagation();togglePopover(this)">
             <span class="type-badge ${cls} has-info">${t}</span>
             <span class="type-popover">${THOMPSON_DESC}</span>
           </span>`;
@@ -727,6 +716,20 @@ init();
 document.addEventListener('click', () => {
   document.querySelectorAll('.type-badge-wrap.open').forEach(el => el.classList.remove('open'));
 });
+
+window.togglePopover = function(wrap) {
+  const wasOpen = wrap.classList.contains('open');
+  // Close all first
+  document.querySelectorAll('.type-badge-wrap.open').forEach(el => el.classList.remove('open'));
+  if (!wasOpen) {
+    const popover = wrap.querySelector('.type-popover');
+    const rect = wrap.getBoundingClientRect();
+    // Position below the badge
+    popover.style.top = (rect.bottom + 8) + 'px';
+    popover.style.left = Math.min(rect.left, window.innerWidth - 236) + 'px';
+    wrap.classList.add('open');
+  }
+};
 </script>
 </body>
 </html>
