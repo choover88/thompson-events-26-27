@@ -523,7 +523,6 @@ function buildCard(ev, isPast) {
   card.className = 'event-card' + (isPast?' past':'');
 
   // Build type badges — Thompson Event gets a tap/click popover using the Info column
-  const THOMPSON_DESC = ev.extraInfo || 'A Thompson Event is a program or gathering hosted or co-sponsored by the Thompson Scholars Learning Community, designed to support scholar connection, engagement, and growth.';
   const typeBadges = ev.type
     ? ev.type.split(',').map(t => t.trim()).filter(Boolean).map(t => {
         const cls = typeClass(t);
@@ -560,7 +559,7 @@ function buildCard(ev, isPast) {
 
   const isThompson = ev.type && ev.type.toLowerCase().includes('thompson');
   const thompsonNote = isThompson
-    ? `<p class="thompson-note">${ev.extraInfo || 'A Thompson Event is a program or gathering hosted or co-sponsored by the Thompson Scholars Learning Community, designed to support scholar connection, engagement, and growth.'}</p>`
+    ? `<p class="thompson-note">A Thompson Event is a program or gathering hosted or co-sponsored by the Thompson Scholars Learning Community, designed to support scholar connection, engagement, and growth.</p>`
     : '';
   const actionBtns = [];
   if (ev.signup) {
@@ -615,81 +614,42 @@ function buildCard(ev, isPast) {
 }
 
 async function init() {
-  const loading    = document.getElementById('loading');
-  const errorMsg   = document.getElementById('error-msg');
-  const container  = document.getElementById('events-container');
-  const upList     = document.getElementById('upcoming-list');
-  const pastList   = document.getElementById('past-list');
+  const loading     = document.getElementById('loading');
+  const errorMsg    = document.getElementById('error-msg');
+  const container   = document.getElementById('events-container');
+  const upList      = document.getElementById('upcoming-list');
+  const pastList    = document.getElementById('past-list');
   const pastSection = document.getElementById('past-section');
 
-  // Hardcoded fallback data (always works, even offline or when CORS blocks the fetch)
-  const FALLBACK_EVENTS = [
-    { date: 'Sunday, August 30, 2026', event: 'Student Leadership Team Fair', time: '7:00pm - 8:00pm', loc: 'TBD', info: 'If you're interested in stepping into a leadership role, joining a SLT committee is the best place to start. The SLT Fair is designed to help you figure out which committee is the best fit for you. You'll meet current leaders, learn what each group does, and get a better sense of where you want to get involved.', signup: '', type: 'Thompson Event', extraInfo: '' },
-    { date: 'Wednesday, September 16, 2026', event: 'Letters of Love Collaboration', time: '6:00pm - 8:00pm', loc: 'TBD', info: '', signup: '', type: 'Thompson Event', extraInfo: '' },
-    { date: 'Thursday, September 24, 2026', event: 'Fall Craft Night', time: '6:00pm - 8:00pm', loc: 'TBD', info: '', signup: '', type: 'Thompson Event', extraInfo: '' },
-    { date: 'Sunday, September 27, 2026', event: 'Student Leadership Team General Assembly', time: '7:00pm - 8:00pm', loc: 'TBD', info: 'General Assemblies are an opportunity for Thompson Scholars to take part in a Student Leadership Team–led meeting, hear about upcoming events and opportunities, and engage in a short professional development or skill-building activity.', signup: '', type: 'Thompson Event', extraInfo: '' },
-    { date: 'Wednesday, October 14, 2026', event: 'Degree Audit Support!', time: '10:00am - 11:30am', loc: 'TBD', info: '', signup: '', type: 'Thompson Event', extraInfo: '' },
-    { date: 'Wednesday, October 14, 2026', event: 'Degree Audit Support!', time: '3:00pm - 4:30pm', loc: 'TBD', info: '', signup: '', type: 'Thompson Event', extraInfo: '' },
-    { date: 'Thursday, October 22, 2026', event: 'Eco-Bricking', time: '5:00pm - 7:00pm', loc: 'TBD', info: '', signup: '', type: 'Service, Thompson Event', extraInfo: '' },
-    { date: 'Sunday, October 25, 2026', event: 'Student Leadership Team General Assembly', time: '7:00pm - 8:00pm', loc: 'TBD', info: 'General Assemblies are an opportunity for Thompson Scholars to take part in a Student Leadership Team–led meeting, hear about upcoming events and opportunities, and engage in a short professional development or skill-building activity.', signup: '', type: 'Thompson Event', extraInfo: '' },
-    { date: 'Sunday, November 22, 2026', event: 'Student Leadership Team General Assembly', time: '7:00pm - 8:00pm', loc: 'TBD', info: 'General Assemblies are an opportunity for Thompson Scholars to take part in a Student Leadership Team–led meeting, hear about upcoming events and opportunities, and engage in a short professional development or skill-building activity.', signup: '', type: 'Thompson Event', extraInfo: '' },
-  ];
-
-  function processFallback() {
-    return FALLBACK_EVENTS.map(r => ({
-      date:      parseDate(r.date),
-      event:     r.event,
-      time:      r.time,
-      loc:       r.loc,
-      info:      r.info,
-      signup:    r.signup,
-      type:      r.type,
-      extraInfo: r.extraInfo,
-    }));
-  }
+  const MONTHS_FULL = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const PER_PAGE = 10;
+  let currentPage = 0;
 
   try {
-    let rows = [];
-    try {
-      const resp = await fetch(CSV_URL);
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-      const csv = await resp.text();
-      rows = parseCSV(csv);
-    } catch(fetchErr) {
-      console.warn('Sheet fetch failed, using fallback data:', fetchErr.message);
-    }
+    const resp = await fetch(CSV_URL);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const csv = await resp.text();
+    const rows = parseCSV(csv);
 
-    // If fetch failed or returned no events, use fallback
-    const events_raw = rows.length ? rows.map(r => ({
+    const events = rows.map(r => ({
       date:      parseDate(get(r, 'Date', 'date')),
       event:     get(r, 'Event', 'event', 'name', 'title'),
       time:      get(r, 'Time', 'time'),
       loc:       get(r, 'Official Location', 'official location', 'location'),
       info:      get(r, 'Additional Info', 'additional info', 'description'),
-      signup:    get(r, 'Sign Up', 'sign up', 'signup', 'link', 'url', 'zoom'),
+      signup:    get(r, 'Sign Up', 'sign up', 'signup'),
       type:      get(r, 'Type', 'type', 'event type'),
-      extraInfo: get(r, 'Info', 'info'),
-    })) : processFallback();
-
-    const events = events_raw.filter(e => e.event);
-    const placeholder = rows.length === 0;
-
-    // events already mapped above
+    })).filter(e => e.event);
 
     const today = new Date(); today.setHours(0,0,0,0);
     const upcoming = events.filter(e => !e.date || e.date >= today).sort((a,b) => (!a.date?1:!b.date?-1:a.date-b.date));
     const past     = events.filter(e => e.date && e.date < today).sort((a,b) => b.date-a.date);
 
-    const MONTHS_FULL = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-    const PER_PAGE = 10;
-    let currentPage = 0;
-
     function renderUpcoming() {
       upList.innerHTML = '';
-      const start = currentPage * PER_PAGE;
-      const slice = upcoming.slice(start, start + PER_PAGE);
+      const s = currentPage * PER_PAGE;
+      const slice = upcoming.slice(s, s + PER_PAGE);
       const totalPages = Math.ceil(upcoming.length / PER_PAGE);
-
       let lastMonth = null;
       slice.forEach(ev => {
         const m = ev.date ? ev.date.getMonth() : null;
@@ -704,13 +664,10 @@ async function init() {
         }
         upList.appendChild(buildCard(ev, false));
       });
-
-      // Pagination controls
       const pag = document.getElementById('pagination');
       const prevBtn = document.getElementById('prev-btn');
       const nextBtn = document.getElementById('next-btn');
       const pageInfo = document.getElementById('page-info');
-
       if (upcoming.length > PER_PAGE) {
         pag.style.display = 'flex';
         prevBtn.disabled = currentPage === 0;
@@ -744,7 +701,7 @@ async function init() {
   } catch(err) {
     loading.style.display = 'none';
     errorMsg.style.display = 'block';
-    errorMsg.textContent = `Couldn't load events — ${err.message}. Make sure the Google Sheet is public ("Anyone with the link can view").`;
+    errorMsg.textContent = `Couldn't load events — ${err.message}.`;
   }
 }
 
