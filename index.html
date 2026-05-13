@@ -155,6 +155,8 @@
     color: var(--brown-light);
     line-height: 1.3;
   }
+
+  .date-badge .day {
     font-size: 1.45rem; font-weight: 800;
     color: var(--brown); line-height: 1.1;
   }
@@ -353,6 +355,7 @@
     color: var(--text-muted);
     letter-spacing: 0.06em;
   }
+  .no-events {
     text-align: center; padding: 3rem;
     font-size: 0.72rem; font-weight: 600;
     letter-spacing: 0.1em; text-transform: uppercase;
@@ -540,42 +543,10 @@ function buildCard(ev, isPast) {
       : `<span class="chip chip-loc">${iconPin} ${ev.loc}</span>`
     : '';
 
-  // Action buttons (signup / zoom join)
-  let actionSection = '';
-  const actionBtns = [];
-  if (ev.signup) {
-    const isZoomLink = /zoom\.us|meeting\.zoom/i.test(ev.signup);
-    if (isZoomLink) {
-      actionBtns.push(`<a class="btn btn-zoom" href="${ev.signup}" target="_blank" rel="noopener">${iconVideo} Join Zoom Meeting</a>`);
-    } else {
-      actionBtns.push(`<a class="btn btn-signup" href="${ev.signup}" target="_blank" rel="noopener">${iconLink} Sign Up</a>`);
-    }
-  } else if (isZoom(ev.loc) && ev.loc.startsWith('http')) {
-    actionBtns.push(`<a class="btn btn-zoom" href="${ev.loc}" target="_blank" rel="noopener">${iconVideo} Join Zoom Meeting</a>`);
-  }
-  if (actionBtns.length) {
-    actionSection = `<p class="action-label">Links</p><div class="action-btns">${actionBtns.join('')}</div>`;
-  }
-
   const isThompson = ev.type && ev.type.toLowerCase().includes('thompson');
   const thompsonNote = isThompson
     ? `<p class="thompson-note">A Thompson Event is a program or gathering hosted or co-sponsored by the Thompson Scholars Learning Community, designed to support scholar connection, engagement, and growth.</p>`
     : '';
-  const actionBtns = [];
-  if (ev.signup) {
-    const isZoomLink = /zoom\.us|meeting\.zoom/i.test(ev.signup);
-    if (isZoomLink) {
-      actionBtns.push(`<a class="btn btn-zoom" href="${ev.signup}" target="_blank" rel="noopener">${iconVideo} Join Zoom Meeting</a>`);
-    } else {
-      actionBtns.push(`<a class="btn btn-signup" href="${ev.signup}" target="_blank" rel="noopener">${iconLink} Sign Up</a>`);
-    }
-  } else if (zoom && ev.loc.startsWith('http')) {
-    actionBtns.push(`<a class="btn btn-zoom" href="${ev.loc}" target="_blank" rel="noopener">${iconVideo} Join Zoom Meeting</a>`);
-  }
-  if (actionBtns.length) {
-    actionSection = `<p class="action-label">Links</p><div class="action-btns">${actionBtns.join('')}</div>`;
-  }
-
   card.innerHTML = `
     <div class="card-header">
       <div class="date-badge">
