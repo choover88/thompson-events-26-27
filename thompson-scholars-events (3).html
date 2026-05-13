@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Thompson Scholars — Events</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --orange: #fd5000;
+    --orange-light: #fff3ee;
+    --orange-mid: #ffc9b0;
+    --brown: #4f2c1d;
+    --brown-light: #7a4632;
+    --gold: #f5c163;
+    --gold-light: #fdf6e3;
+    --tan: #eae1d8;
+    --seafoam: #80baac;
+    --seafoam-light: #eaf4f2;
+    --teal: #1c626d;
+    --teal-light: #e1eef0;
+    --white: #ffffff;
+    --bg: #faf8f5;
+    --text: #2a1510;
+    --text-mid: #4f2c1d;
+    --text-muted: #9a7c6e;
+    --border: #ddd4c8;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Montserrat', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  .header-bar { height: 5px; background: var(--orange); }
+
+  header {
+    background: var(--brown);
+    padding: 1.75rem 2rem 1.6rem;
+  }
+
+  .header-inner {
+    max-width: 900px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+  }
+
+  .logo-circle {
+    width: 52px; height: 52px;
+    background: var(--orange);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 1rem; color: white;
+    letter-spacing: 0.03em; flex-shrink: 0;
+  }
+
+  .header-text h1 {
+    font-family: 'Dancing Script', cursive;
+    font-size: 2.5rem; font-weight: 700;
+    color: var(--gold); line-height: 1;
+  }
+
+  .header-text .subtitle {
+    font-size: 0.6rem; font-weight: 700;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--tan); margin-top: 4px;
+  }
+
+  main {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2.5rem 2rem 5rem;
+  }
+
+  .section-label {
+    font-size: 0.6rem; font-weight: 800;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--orange);
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 1.25rem;
+  }
+
+  .section-label::after {
+    content: ''; flex: 1; height: 1.5px;
+    background: linear-gradient(to right, var(--orange-mid), transparent);
+    border-radius: 2px;
+  }
+
+  #loading, #error-msg {
+    text-align: center; padding: 5rem 2rem;
+    font-size: 0.75rem; font-weight: 600;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  #error-msg { color: var(--orange); }
+
+  .events-list { display: flex; flex-direction: column; gap: 0.6rem; }
+
+  /* ── CARD ── */
+  .event-card {
+    background: var(--white);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.16s, box-shadow 0.16s;
+  }
+
+  .event-card:hover {
+    border-color: var(--orange);
+    box-shadow: 0 2px 16px rgba(253,80,0,0.08);
+  }
+
+  .event-card.open {
+    border-color: var(--orange);
+    border-left-width: 4px;
+  }
+
+  .card-header {
+    display: flex; align-items: center;
+    gap: 1rem; padding: 0.9rem 1.2rem;
+    user-select: none;
+  }
+
+  /* Date badge */
+  .date-badge {
+    min-width: 54px; text-align: center;
+    background: var(--orange-light);
+    border: 1.5px solid var(--orange-mid);
+    border-radius: 9px; padding: 0.4rem 0.45rem;
+    flex-shrink: 0;
+  }
+
+  .date-badge .mon {
+    font-size: 0.58rem; font-weight: 800;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--orange); line-height: 1;
+  }
+
+  .date-badge .day {
+    font-size: 1.45rem; font-weight: 800;
+    color: var(--brown); line-height: 1.1;
+  }
+
+  .card-info { flex: 1; min-width: 0; }
+
+  .title-row {
+    display: flex; align-items: center;
+    gap: 8px; flex-wrap: wrap;
+  }
+
+  .event-title {
+    font-size: 0.88rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.05em;
+    color: var(--text);
+  }
+
+  /* Event type badge */
+  .type-badge {
+    font-size: 0.58rem; font-weight: 800;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 2px 7px; border-radius: 20px;
+    white-space: nowrap;
+  }
+
+  .type-thompson { background: var(--orange-light); color: var(--orange); border: 1px solid var(--orange-mid); }
+  .type-service  { background: var(--teal-light);   color: var(--teal);   border: 1px solid #b8d8dc; }
+  .type-other    { background: var(--gold-light);    color: #7b5a12;       border: 1px solid #f0d898; }
+
+  .chips {
+    display: flex; flex-wrap: wrap;
+    gap: 5px; margin-top: 5px;
+  }
+
+  .chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 0.65rem; font-weight: 600; letter-spacing: 0.03em;
+    padding: 2px 8px; border-radius: 20px;
+  }
+
+  .chip-time { background: var(--gold-light); color: #7b5a12; border: 1px solid #f0d898; }
+  .chip-loc  { background: var(--teal-light); color: var(--teal); border: 1px solid #b8d8dc; }
+  .chip-zoom { background: #e8f0fe; color: #1a56c4; border: 1px solid #c0d0f8; }
+
+  .chevron {
+    color: var(--text-muted);
+    transition: transform 0.2s, color 0.2s;
+    flex-shrink: 0;
+  }
+
+  .event-card.open .chevron { transform: rotate(180deg); color: var(--orange); }
+
+  /* Body */
+  .card-body {
+    display: none;
+    padding: 0 1.4rem 1.3rem 4.7rem;
+    border-top: 1px solid var(--tan);
+  }
+
+  .event-card.open .card-body { display: block; }
+
+  .info-text {
+    font-size: 0.84rem; font-weight: 500;
+    line-height: 1.75; color: var(--text-mid);
+    margin-top: 1rem; margin-bottom: 1.2rem;
+  }
+
+  .action-label {
+    font-size: 0.58rem; font-weight: 800;
+    text-transform: uppercase; letter-spacing: 0.15em;
+    color: var(--text-muted); margin-bottom: 0.55rem;
+  }
+
+  .action-btns {
+    display: flex; flex-wrap: wrap; gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .cal-label {
+    font-size: 0.58rem; font-weight: 800;
+    text-transform: uppercase; letter-spacing: 0.15em;
+    color: var(--text-muted); margin-bottom: 0.55rem;
+  }
+
+  .cal-btns { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.67rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    padding: 0.48rem 1rem; border-radius: 7px;
+    border: none; cursor: pointer; text-decoration: none;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+
+  .btn:hover { opacity: 0.86; transform: translateY(-1px); }
+  .btn:active { transform: scale(0.97); }
+
+  .btn-signup { background: var(--orange); color: white; }
+  .btn-zoom   { background: #1a56c4; color: white; }
+  .btn-google { background: var(--brown); color: white; }
+  .btn-ics    { background: var(--brown-light); color: white; }
+
+  /* Divider between sections */
+  .past-label {
+    font-size: 0.58rem; font-weight: 800;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--text-muted);
+    display: flex; align-items: center; gap: 10px;
+    margin: 2.5rem 0 1rem;
+  }
+
+  .past-label::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+  }
+
+  .event-card.past { opacity: 0.6; }
+  .event-card.past .date-badge { background: var(--tan); border-color: var(--border); }
+  .event-card.past .date-badge .mon,
+  .event-card.past .date-badge .day { color: var(--text-muted); }
+  .event-card.past .event-title { color: var(--text-muted); }
+
+  .no-events {
+    text-align: center; padding: 3rem;
+    font-size: 0.72rem; font-weight: 600;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--text-muted);
+  }
+</style>
+</head>
+<body>
+
+<div class="header-bar"></div>
+<header>
+  <div class="header-inner">
+    <div class="logo-circle" aria-hidden="true">BG</div>
+    <div class="header-text">
+      <h1>Thompson Scholars</h1>
+      <p class="subtitle">Bowling Green State University &nbsp;·&nbsp; Events</p>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div id="loading">Loading events…</div>
+  <div id="error-msg" style="display:none"></div>
+  <div id="events-container" style="display:none">
+    <p class="section-label">Upcoming Events</p>
+    <div id="upcoming-list" class="events-list"></div>
+    <div id="past-section" style="display:none">
+      <p class="past-label">Past Events</p>
+      <div id="past-list" class="events-list"></div>
+    </div>
+  </div>
+</main>
+
+<script>
+const SHEET_ID = '1Zwi_S5IC9PXuKiy8ruc0csk32KIybqeTiurNC6ImHdc';
+const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
+const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function parseCSV(text) {
+  const lines = text.trim().split('\n');
+  const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g,'').toLowerCase());
+  return lines.slice(1).map(line => {
+    const cols = []; let cur = '', inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      if (line[i] === '"') { inQ = !inQ; }
+      else if (line[i] === ',' && !inQ) { cols.push(cur); cur = ''; }
+      else { cur += line[i]; }
+    }
+    cols.push(cur);
+    const obj = {};
+    headers.forEach((h,i) => { obj[h] = (cols[i]||'').trim().replace(/^"|"$/g,''); });
+    return obj;
+  }).filter(r => Object.values(r).some(v => v.trim()));
+}
+
+function get(row, ...keys) {
+  for (const k of keys) {
+    const v = row[k.toLowerCase()];
+    if (v && v.trim()) return v.trim();
+  }
+  return '';
+}
+
+// Handles both "Sunday, August 30, 2026" and "8/30/2026" etc.
+function parseDate(raw) {
+  if (!raw) return null;
+  // Strip leading day-of-week if present: "Sunday, August 30, 2026" -> "August 30, 2026"
+  const cleaned = raw.replace(/^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday),\s*/i, '');
+  let d = new Date(cleaned);
+  if (!isNaN(d.getTime())) return d;
+  // Try M/D/YYYY
+  const p = raw.split(/[\/\-\.]/);
+  if (p.length >= 3) {
+    d = new Date(`${p[2]}-${p[0].padStart(2,'0')}-${p[1].padStart(2,'0')}`);
+    if (!isNaN(d.getTime())) return d;
+  }
+  return null;
+}
+
+function isZoom(loc) {
+  return /zoom|virtual|online|meeting\.zoom/i.test(loc);
+}
+
+function toGCalDates(dateObj, timeStr) {
+  if (!dateObj) return '19700101/19700101';
+  const pad = n => String(n).padStart(2,'0');
+  const base = `${dateObj.getFullYear()}${pad(dateObj.getMonth()+1)}${pad(dateObj.getDate())}`;
+  if (!timeStr) return `${base}/${base}`;
+  // Handle "7:00pm - 8:00pm" — use first time as start, second as end
+  const parts = timeStr.split(/\s*[-–]\s*/);
+  function parseT(t) {
+    t = t.toLowerCase().replace(/\s/g,'');
+    const isPM = t.includes('pm'), isAM = t.includes('am');
+    const nums = t.replace(/[apm]/g,'').split(':');
+    let h = parseInt(nums[0])||0, m = parseInt(nums[1])||0;
+    if (isPM && h<12) h+=12;
+    if (isAM && h===12) h=0;
+    return { h, m };
+  }
+  const pad2 = n => String(n).padStart(2,'0');
+  const s = parseT(parts[0]);
+  const startStr = `${base}T${pad2(s.h)}${pad2(s.m)}00`;
+  if (parts.length > 1) {
+    const e = parseT(parts[1]);
+    const endStr = `${base}T${pad2(e.h)}${pad2(e.m)}00`;
+    return `${startStr}/${endStr}`;
+  }
+  return `${startStr}/${startStr}`;
+}
+
+function googleURL(ev) {
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE`
+    + `&text=${encodeURIComponent(ev.event)}`
+    + `&dates=${toGCalDates(ev.date, ev.time)}`
+    + `&details=${encodeURIComponent(ev.info + (ev.signup ? '\n\nSign Up: '+ev.signup : ''))}`
+    + `&location=${encodeURIComponent(ev.loc)}`;
+}
+
+function makeICS(ev) {
+  const pad = n => String(n).padStart(2,'0');
+  const d = ev.date;
+  const base = d ? `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}` : '19700101';
+  const desc = ((ev.info||'') + (ev.signup ? '\n\nSign Up: '+ev.signup : '')).replace(/\n/g,'\\n');
+  return ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Thompson Scholars BGSU//EN',
+    'BEGIN:VEVENT',
+    `UID:ts-${Date.now()}@bgsu.edu`,
+    `DTSTART:${base}`, `DTEND:${base}`,
+    `SUMMARY:${ev.event}`,
+    `DESCRIPTION:${desc}`,
+    `LOCATION:${ev.loc}`,
+    'END:VEVENT','END:VCALENDAR'].join('\r\n');
+}
+
+function dlICS(ev) {
+  const blob = new Blob([makeICS(ev)], {type:'text/calendar'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); 
+  a.download = `${ev.event.replace(/\s+/g,'-').slice(0,40)}.ics`;
+  a.click();
+}
+
+// SVG icons
+const iconClock = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`;
+const iconPin   = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`;
+const iconVideo = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>`;
+const iconCal   = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`;
+const iconDl    = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`;
+const iconLink  = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>`;
+
+function typeClass(type) {
+  if (!type) return '';
+  const t = type.toLowerCase();
+  if (t.includes('service')) return 'type-service';
+  if (t.includes('thompson')) return 'type-thompson';
+  return 'type-other';
+}
+
+function buildCard(ev, isPast) {
+  const d = ev.date;
+  const zoom = isZoom(ev.loc);
+  const card = document.createElement('div');
+  card.className = 'event-card' + (isPast?' past':'');
+
+  // Build type badges (can be multiple e.g. "Service, Thompson Event")
+  const typeBadges = ev.type
+    ? ev.type.split(',').map(t => t.trim()).filter(Boolean).map(t =>
+        `<span class="type-badge ${typeClass(t)}">${t}</span>`
+      ).join(' ')
+    : '';
+
+  // Location chip: show Zoom badge if virtual, otherwise location name
+  const locChip = ev.loc
+    ? zoom
+      ? `<span class="chip chip-zoom">${iconVideo} Zoom</span>`
+      : `<span class="chip chip-loc">${iconPin} ${ev.loc}</span>`
+    : '';
+
+  // Action buttons (signup / zoom join)
+  let actionSection = '';
+  const actionBtns = [];
+  if (ev.signup) {
+    const isZoomLink = /zoom\.us|meeting\.zoom/i.test(ev.signup);
+    if (isZoomLink) {
+      actionBtns.push(`<a class="btn btn-zoom" href="${ev.signup}" target="_blank" rel="noopener">${iconVideo} Join Zoom Meeting</a>`);
+    } else {
+      actionBtns.push(`<a class="btn btn-signup" href="${ev.signup}" target="_blank" rel="noopener">${iconLink} Sign Up</a>`);
+    }
+  } else if (zoom && ev.loc.startsWith('http')) {
+    actionBtns.push(`<a class="btn btn-zoom" href="${ev.loc}" target="_blank" rel="noopener">${iconVideo} Join Zoom Meeting</a>`);
+  }
+  if (actionBtns.length) {
+    actionSection = `<p class="action-label">Links</p><div class="action-btns">${actionBtns.join('')}</div>`;
+  }
+
+  card.innerHTML = `
+    <div class="card-header">
+      <div class="date-badge">
+        <div class="mon">${d ? MON[d.getMonth()] : '—'}</div>
+        <div class="day">${d ? d.getDate() : '—'}</div>
+      </div>
+      <div class="card-info">
+        <div class="title-row">
+          <span class="event-title">${ev.event || 'Event'}</span>
+          ${typeBadges}
+        </div>
+        <div class="chips">
+          ${ev.time ? `<span class="chip chip-time">${iconClock} ${ev.time}</span>` : ''}
+          ${locChip}
+        </div>
+      </div>
+      <svg class="chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+    <div class="card-body">
+      ${ev.info
+        ? `<p class="info-text">${ev.info}</p>`
+        : `<p class="info-text" style="opacity:0.5;font-style:italic">No additional information provided.</p>`}
+      ${actionSection}
+      <p class="cal-label">Add to your calendar</p>
+      <div class="cal-btns">
+        <a class="btn btn-google" href="${googleURL(ev)}" target="_blank" rel="noopener">${iconCal} Google Calendar</a>
+        <button class="btn btn-ics">${iconDl} Apple / Outlook (.ics)</button>
+      </div>
+    </div>`;
+
+  card.querySelector('.card-header').addEventListener('click', () => card.classList.toggle('open'));
+  card.querySelector('.btn-ics').addEventListener('click', e => { e.stopPropagation(); dlICS(ev); });
+  return card;
+}
+
+async function init() {
+  const loading    = document.getElementById('loading');
+  const errorMsg   = document.getElementById('error-msg');
+  const container  = document.getElementById('events-container');
+  const upList     = document.getElementById('upcoming-list');
+  const pastList   = document.getElementById('past-list');
+  const pastSection = document.getElementById('past-section');
+
+  try {
+    const resp = await fetch(CSV_URL);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const csv = await resp.text();
+    const rows = parseCSV(csv);
+
+    const events = rows.map(r => ({
+      date:   parseDate(get(r, 'Date', 'date')),
+      event:  get(r, 'Event', 'event', 'name', 'title'),
+      time:   get(r, 'Time', 'time'),
+      loc:    get(r, 'Official Location', 'official location', 'location'),
+      info:   get(r, 'Additional Info', 'additional info', 'description'),
+      signup: get(r, 'Sign Up', 'sign up', 'signup', 'link', 'url', 'zoom'),
+      type:   get(r, 'Type', 'type', 'event type'),
+    })).filter(e => e.event);
+
+    const today = new Date(); today.setHours(0,0,0,0);
+    const upcoming = events.filter(e => !e.date || e.date >= today).sort((a,b) => (!a.date?1:!b.date?-1:a.date-b.date));
+    const past     = events.filter(e => e.date && e.date < today).sort((a,b) => b.date-a.date);
+
+    if (!upcoming.length) {
+      upList.innerHTML = '<div class="no-events">No upcoming events scheduled.</div>';
+    } else {
+      upcoming.forEach(ev => upList.appendChild(buildCard(ev, false)));
+    }
+
+    if (past.length) {
+      past.forEach(ev => pastList.appendChild(buildCard(ev, true)));
+      pastSection.style.display = 'block';
+    }
+
+    loading.style.display = 'none';
+    container.style.display = 'block';
+
+  } catch(err) {
+    loading.style.display = 'none';
+    errorMsg.style.display = 'block';
+    errorMsg.textContent = `Couldn't load events — ${err.message}. Make sure the Google Sheet is public ("Anyone with the link can view").`;
+  }
+}
+
+init();
+</script>
+</body>
+</html>
